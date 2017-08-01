@@ -573,11 +573,9 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
             const auto &from_node =
                 isTrivial ? node_along_road_entering
                           : m_compressed_edge_container.GetLastEdgeSourceID(node_based_edge_from);
-            const auto &via_node =
-                m_compressed_edge_container.GetLastEdgeTargetID(node_based_edge_from);
             const auto &to_node = m_compressed_edge_container.GetFirstEdgeTargetID(turn.eid);
 
-            lookup::TurnIndexBlock turn_index_block = {from_node, via_node, to_node};
+            lookup::TurnIndexBlock turn_index_block = {from_node,node_at_center_of_intersection,to_node};
 
             // insert data into the designated buffer
             return EdgeWithData{

@@ -524,6 +524,7 @@ updateConditionalTurns(const UpdaterConfig &config,
     for (std::uint64_t edge_index = 0; edge_index < turn_weight_penalties.size(); ++edge_index)
     {
         const extractor::lookup::TurnIndexBlock internal_turn = turn_index_blocks[edge_index];
+        std::cout << "TurnIndexBlock: " << internal_turn.from_id << " " << internal_turn.via_id << " " << internal_turn.to_id << std::endl;
 
         const auto is_no_tuple =
             std::make_tuple(internal_turn.from_id, internal_turn.via_id, internal_turn.to_id);
@@ -531,6 +532,7 @@ updateConditionalTurns(const UpdaterConfig &config,
         // turn has a no_* restriction
         if (is_no_set.find(is_no_tuple) != is_no_set.end())
         {
+            std::cout << "Restricted as `no` (" << edge_index << ")" << std::endl;
             util::Log(logDEBUG) << "Conditional penalty set on edge: " << edge_index;
             turn_weight_penalties[edge_index] = INVALID_TURN_PENALTY;
             updated_turns.push_back(edge_index);
@@ -542,6 +544,7 @@ updateConditionalTurns(const UpdaterConfig &config,
             if (*is_only_lookup(is_only_tuple) == internal_turn.to_id)
                 continue;
 
+            std::cout << "Restricted as `not only` (" << edge_index << ")" << std::endl;
             util::Log(logDEBUG) << "Conditional penalty set on edge: " << edge_index;
             turn_weight_penalties[edge_index] = INVALID_TURN_PENALTY;
             updated_turns.push_back(edge_index);
