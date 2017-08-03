@@ -524,7 +524,6 @@ updateConditionalTurns(const UpdaterConfig &config,
     for (std::uint64_t edge_index = 0; edge_index < turn_weight_penalties.size(); ++edge_index)
     {
         const extractor::lookup::TurnIndexBlock internal_turn = turn_index_blocks[edge_index];
-        std::cout << "TurnIndexBlock: " << internal_turn.from_id << " " << internal_turn.via_id << " " << internal_turn.to_id << std::endl;
 
         const auto is_no_tuple =
             std::make_tuple(internal_turn.from_id, internal_turn.via_id, internal_turn.to_id);

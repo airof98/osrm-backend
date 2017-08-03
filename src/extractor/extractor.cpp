@@ -110,7 +110,8 @@ int Extractor::run(ScriptingEnvironment &scripting_environment)
 
     guidance::LaneDescriptionMap turn_lane_map;
     std::vector<TurnRestriction> turn_restrictions;
-    std::tie(turn_lane_map, turn_restrictions) =
+    std::vector<ConditionalTurnRestriction> conditional_turn_restrictions;
+    std::tie(turn_lane_map, turn_restrictions, conditional_turn_restrictions) =
         ParseOSMData(scripting_environment, number_of_threads);
 
     // Transform the node-based graph that OSM is based on into an edge-based graph
@@ -138,6 +139,7 @@ int Extractor::run(ScriptingEnvironment &scripting_environment)
                                              edge_based_edge_list,
                                              config.GetPath(".osrm.icd").string(),
                                              turn_restrictions,
+                                             conditional_turn_restrictions,
                                              turn_lane_map);
 
     auto number_of_node_based_nodes = graph_size.first;
@@ -190,7 +192,17 @@ int Extractor::run(ScriptingEnvironment &scripting_environment)
     return 0;
 }
 
-std::tuple<guidance::LaneDescriptionMap, std::vector<TurnRestriction>>
+void Extractor::WriteConditionalRestrictions(const std::string &path, std::vector<ConditionalTurnRestriction> &conditional_turn_restrictions)
+{
+        std::uint64_t written_restriction_count = conditional_turn_restrictions.size();
+            storage::io::FileWriter restrictions_out_file(path,
+                                                              storage::io::FileWriter::GenerateFingerprint);
+                serialization::write(restrictions_out_file, conditional_turn_restrictions);
+                    util::Log() << "number of conditional restrictions written to disk: "
+                                    << written_restriction_count;
+}
+
+std::tuple<guidance::LaneDescriptionMap, std::vector<TurnRestriction>,std::vector<ConditionalTurnRestriction>>
 Extractor::ParseOSMData(ScriptingEnvironment &scripting_environment,
                         const unsigned number_of_threads)
 {
@@ -333,7 +345,6 @@ Extractor::ParseOSMData(ScriptingEnvironment &scripting_environment,
 
     extraction_containers.PrepareData(scripting_environment,
                                       config.GetPath(".osrm").string(),
-                                      config.GetPath(".osrm.restrictions").string(),
                                       config.GetPath(".osrm.names").string());
 
     auto profile_properties = scripting_environment.GetProfileProperties();
@@ -344,7 +355,8 @@ Extractor::ParseOSMData(ScriptingEnvironment &scripting_environment,
     util::Log() << "extraction finished after " << TIMER_SEC(extracting) << "s";
 
     return std::make_tuple(std::move(turn_lane_map),
-                           std::move(extraction_containers.unconditional_turn_restrictions));
+                           std::move(extraction_containers.unconditional_turn_restrictions),
+                           std::move(extraction_containers.conditional_turn_restrictions));
 }
 
 void Extractor::FindComponents(unsigned max_edge_id,
@@ -451,6 +463,7 @@ Extractor::BuildEdgeExpandedGraph(ScriptingEnvironment &scripting_environment,
                                   util::DeallocatingVector<EdgeBasedEdge> &edge_based_edge_list,
                                   const std::string &intersection_class_output_file,
                                   std::vector<TurnRestriction> &turn_restrictions,
+                                  std::vector<ConditionalTurnRestriction> &conditional_turn_restrictions,
                                   guidance::LaneDescriptionMap &turn_lane_map)
 {
     std::unordered_set<NodeID> barrier_nodes;
@@ -465,8 +478,11 @@ Extractor::BuildEdgeExpandedGraph(ScriptingEnvironment &scripting_environment,
                               traffic_signals,
                               scripting_environment,
                               turn_restrictions,
+                              conditional_turn_restrictions,
                               *node_based_graph,
                               compressed_edge_container);
+
+    WriteConditionalRestrictions(config.GetPath(".osrm.restrictions").string(),conditional_turn_restrictions);
 
     turn_restrictions = removeInvalidRestrictions(std::move(turn_restrictions), *node_based_graph);
 

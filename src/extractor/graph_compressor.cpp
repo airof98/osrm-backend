@@ -24,13 +24,14 @@ void GraphCompressor::Compress(const std::unordered_set<NodeID> &barrier_nodes,
                                const std::unordered_set<NodeID> &traffic_signals,
                                ScriptingEnvironment &scripting_environment,
                                std::vector<TurnRestriction> &turn_restrictions,
+                               std::vector<ConditionalTurnRestriction> &conditional_turn_restrictions,
                                util::NodeBasedDynamicGraph &graph,
                                CompressedEdgeContainer &geometry_compressor)
 {
     const unsigned original_number_of_nodes = graph.GetNumberOfNodes();
     const unsigned original_number_of_edges = graph.GetNumberOfEdges();
 
-    RestrictionCompressor restriction_compressor(turn_restrictions);
+    RestrictionCompressor restriction_compressor(turn_restrictions, conditional_turn_restrictions);
 
     // we do not compress turn restrictions on degree two nodes. These nodes are usually used to
     // indicated `directed` barriers
@@ -51,6 +52,7 @@ void GraphCompressor::Compress(const std::unordered_set<NodeID> &barrier_nodes,
         }
     };
     std::for_each(turn_restrictions.begin(), turn_restrictions.end(), remember_via_nodes);
+    std::for_each(conditional_turn_restrictions.begin(), conditional_turn_restrictions.end(), remember_via_nodes);
 
     {
         const auto weight_multiplier =

@@ -126,7 +126,6 @@ ExtractionContainers::ExtractionContainers()
  */
 void ExtractionContainers::PrepareData(ScriptingEnvironment &scripting_environment,
                                        const std::string &osrm_path,
-                                       const std::string &restrictions_file_name,
                                        const std::string &name_file_name)
 {
     storage::io::FileWriter file_out(osrm_path, storage::io::FileWriter::GenerateFingerprint);
@@ -139,7 +138,6 @@ void ExtractionContainers::PrepareData(ScriptingEnvironment &scripting_environme
     WriteEdges(file_out);
 
     PrepareRestrictions();
-    WriteConditionalRestrictions(restrictions_file_name);
     WriteCharData(name_file_name);
 }
 
@@ -631,16 +629,6 @@ void ExtractionContainers::WriteNodes(storage::io::FileWriter &file_out) const
     }
 
     util::Log() << "Processed " << max_internal_node_id << " nodes";
-}
-
-void ExtractionContainers::WriteConditionalRestrictions(const std::string &path)
-{
-    std::uint64_t written_restriction_count = conditional_turn_restrictions.size();
-    storage::io::FileWriter restrictions_out_file(path,
-                                                  storage::io::FileWriter::GenerateFingerprint);
-    serialization::write(restrictions_out_file, conditional_turn_restrictions);
-    util::Log() << "number of conditional restrictions written to disk: "
-                << written_restriction_count;
 }
 
 void ExtractionContainers::PrepareRestrictions()

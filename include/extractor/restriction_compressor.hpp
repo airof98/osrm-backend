@@ -2,6 +2,7 @@
 #define OSRM_EXTRACTOR_RESTRICTION_COMPRESSOR_HPP_
 
 #include "util/typedefs.hpp"
+#include "extractor/restriction.hpp"
 
 #include <boost/unordered_map.hpp>
 #include <vector>
@@ -26,7 +27,8 @@ struct TurnRestriction;
 class RestrictionCompressor
 {
   public:
-    RestrictionCompressor(std::vector<TurnRestriction> &restrictions);
+    RestrictionCompressor(std::vector<TurnRestriction> &restrictions,
+                          std::vector<ConditionalTurnRestriction> &conditional_turn_restrictions);
 
     // account for the compression of `from-via-to` into `from-to`
     void Compress(const NodeID from, const NodeID via, const NodeID to);
