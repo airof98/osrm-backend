@@ -8,6 +8,7 @@
 #include "extractor/suffix_table.hpp"
 
 #include "util/coordinate_calculation.hpp"
+#include "util/guidance/destinations_similarity.hpp"
 #include "util/guidance/name_announcements.hpp"
 #include "util/name_table.hpp"
 #include "util/node_based_graph.hpp"
@@ -194,7 +195,29 @@ std::size_t IntersectionHandler::findObviousTurn(const EdgeID via_edge,
         const auto rhs_continues = IsContinueRoad(rhs_data);
         const auto left_tie = std::tie(lhs.entry_allowed, lhs_continues);
         const auto right_tie = std::tie(rhs.entry_allowed, rhs_continues);
-        return left_tie > right_tie || (left_tie == right_tie && RoadCompare(lhs, rhs));
+        if (left_tie > right_tie)
+            return true;
+        else if (left_tie < right_tie)
+            return false;
+
+        // Check similarity of destinations sets and prefer a road with
+        // destinations more similar to in_way
+        auto lhs_destinations_similarity = 0., rhs_destinations_similarity = 0.;
+        const auto &in_way_destinations = name_table.GetDestinationsForID(in_way_data.name_id);
+        if (!in_way_destinations.empty())
+        {
+            using util::guidance::getDestinationsSimilarity;
+            const auto &lhs_way_destinations = name_table.GetDestinationsForID(lhs_data.name_id);
+            const auto &rhs_way_destinations = name_table.GetDestinationsForID(rhs_data.name_id);
+            lhs_destinations_similarity =
+                getDestinationsSimilarity(in_way_destinations, lhs_way_destinations);
+            rhs_destinations_similarity =
+                getDestinationsSimilarity(in_way_destinations, rhs_way_destinations);
+        }
+
+        return lhs_destinations_similarity > rhs_destinations_similarity ||
+               (lhs_destinations_similarity == rhs_destinations_similarity &&
+                RoadCompare(lhs, rhs));
     };
 
     auto best_option_it = std::min_element(begin(intersection), end(intersection), RoadCompare);

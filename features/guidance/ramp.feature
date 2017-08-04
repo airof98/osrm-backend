@@ -294,5 +294,5 @@ Feature: Ramp Guidance
 
        When I route I should get
             | waypoints | route | turns                              |
-            | a,c       | ,     | depart,arrive                      |
-            | a,d       | ,,    | depart,on ramp slight right,arrive |
+            | a,c       | ,,    | depart,continue slight left,arrive |
+            | a,d       | ,,    | depart,on ramp straight,arrive     |
